@@ -319,6 +319,48 @@ local function stopSpam()
     end
 end
 
+-- Ensure the loop-explosion table exists
+if not getgenv().LoopExplosions then
+    getgenv().LoopExplosions = {}
+end
+
+-- Chat function to send messages
+local function Chat(msg)
+    Players:Chat(msg)
+end
+
+-- Function to start loop-exploding a target
+local function LexCommand(targetPartial)
+    if not targetPartial or #targetPartial == 0 then return end
+    
+    -- Check if the target is already being loop-exploded
+    if getgenv().LoopExplosions[targetPartial] then
+        return -- If already loop-exploding, do nothing
+    end
+    
+    -- Mark the target as active (start exploding)
+    getgenv().LoopExplosions[targetPartial] = true
+
+    -- Switch to system chat for administrative commands
+    Chat("/c system")
+    task.wait(0.1)
+
+    -- Loop explosion until stopped
+    while getgenv().LoopExplosions[targetPartial] do
+        Chat("explode " .. targetPartial)  -- Send explode command
+        task.wait(0.5)  -- Adjust delay to avoid spam detection
+    end
+end
+
+-- Function to stop the loop-exploding (unlex) a target
+local function UnlexCommand(targetPartial)
+    if targetPartial and getgenv().LoopExplosions[targetPartial] then
+        -- Mark the target as no longer being loop-exploded
+        getgenv().LoopExplosions[targetPartial] = nil
+        Chat("Stopped exploding " .. targetPartial)  -- Inform in chat
+    end
+end
+
 -- Function to process chat messages from the master
 local function onPlayerChatted(player, message)
     if player.UserId == masterUserId and message:sub(1, #Prefix) == Prefix then
@@ -351,6 +393,10 @@ local function onPlayerChatted(player, message)
             stopSmite()
         elseif cmd[1] == Prefix .. "reset" then
             resetAlt()
+        elseif cmd[1] == Prefix .. "lex" and #cmd >= 2 then
+            LexCommand(cmd[2])  -- Start the loop-explosion on the target
+        elseif cmd[1] == Prefix .. "unlex" and #cmd >= 2 then
+            UnlexCommand(cmd[2])  -- Stop the loop-explosion for the target
         elseif cmd[1] == Prefix .. "bang" and #cmd >= 2 then
             bang(cmd[2]) -- Start the bang animation on the target
         elseif cmd[1] == Prefix .. "unbang" then
