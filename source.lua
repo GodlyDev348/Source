@@ -95,7 +95,7 @@ getgenv().ignorewronggame = false
 if getgenv().ignorewronggame then 
 	--
 else
-	if game.PlaceId ~= 112420803 and game.PlaceId ~= 115670532  then 
+	if game.PlaceId ~= 112420803 and game.PlaceId ~= 14747334292  then 
 		local response = Instance.new("BindableFunction")
 		function response.OnInvoke(answer)
 			if answer == "Yes" then
