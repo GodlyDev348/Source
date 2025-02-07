@@ -4,6 +4,8 @@ local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local runService = game:GetService("RunService")
 
+
+
 -- Prefix variable
 local prefix = "fd#"
 
@@ -36,6 +38,37 @@ local function teleportToVoidAndBack()
 
     -- Respawn the character at the saved position
     respawnAtSavedPosition()
+end
+
+local antiTouchEnabled = false
+
+-- Function to teleport away from nearby players
+local function teleportAway()
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        local root = character.HumanoidRootPart
+        local safePosition = root.Position + Vector3.new(math.random(-30, 30), 10, math.random(-30, 30))
+        root.CFrame = CFrame.new(safePosition)
+        print("Teleported away from nearby player!")
+    end
+end
+
+-- Function to check for nearby players
+local function checkProximity()
+    while antiTouchEnabled do
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            local root = character.HumanoidRootPart
+            for _, plr in pairs(game.Players:GetPlayers()) do
+                if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    local distance = (root.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+                    if distance < 5 then
+                        teleportAway()
+                        break
+                    end
+                end
+            end
+        end
+        task.wait(0.2) -- Adjust for performance
+    end
 end
 
 -- Function to respawn at saved position after death
@@ -120,6 +153,20 @@ game.Players.LocalPlayer.Chatted:Connect(function(message)
             end
         else
             print("Please specify the Lua code to execute.")
+    elseif cmd[1] == "antitouch" then
+        if #cmd >= 2 and cmd[2] == "on" then
+            if not antiTouchEnabled then
+                antiTouchEnabled = true
+                print("Anti-Touch enabled.")
+                task.spawn(checkProximity)
+            else
+                print("Anti-Touch is already enabled.")
+            end
+        elseif #cmd >= 2 and cmd[2] == "off" then
+            antiTouchEnabled = false
+            print("Anti-Touch disabled.")
+        else
+            print("Usage: fd#antitouch on/off")
         end
     end
 end)
